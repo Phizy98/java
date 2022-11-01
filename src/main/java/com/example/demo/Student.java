@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import javax.persistence.*;
 
 import java.util.ArrayList;
@@ -58,16 +60,35 @@ public class Student {
 
     @OneToOne(
             mappedBy = "student",
-            orphanRemoval = true
+            orphanRemoval = true,
+            cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
     )
     private StudentIdCard studentIdCard;
 
     @OneToMany(
             mappedBy = "student",
             orphanRemoval = true,
-            cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
+            cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            fetch = FetchType.EAGER
     )
     private List<Book> books = new ArrayList<>();
+
+    @ManyToMany(
+            cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
+    )
+    @JoinTable(
+            name = "enrolment",
+            joinColumns = @JoinColumn(
+                    name = "student_id",
+                    foreignKey = @ForeignKey(name = "enrolment_student_id_fk")
+            ),
+            inverseJoinColumns = @JoinColumn(
+                    name = "course_id",
+                    foreignKey = @ForeignKey(name = "enrolment_course_id_fk")
+            )
+
+    )
+    private List<Course> courses = new ArrayList<>();
 
     public Student() {
     }
@@ -120,6 +141,32 @@ public class Student {
 
     public void setAge(Integer age) {
         this.age = age;
+    }
+
+    public List<Book> getBooks() {
+        return books;
+    }
+
+    public List<Course> getCourses() {
+        return courses;
+    }
+
+    public void enrolToCourse(Course course){
+        if(!courses.contains(course)){
+            courses.add(course);
+            course.getStudents().add(this);
+        }
+    }
+
+    public void removeCourse(Course course){
+        if(courses.contains(course)){
+            courses.remove(course);
+            course.getStudents().remove(this);
+        }
+    }
+
+    public void setStudentIdCard(StudentIdCard studentIdCard) {
+        this.studentIdCard = studentIdCard;
     }
 
     public void addBook(Book book){

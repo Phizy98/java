@@ -8,8 +8,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.converter.json.GsonBuilderUtils;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @SpringBootApplication
@@ -31,19 +33,26 @@ public class Application {
                     lastName,
                     email,
                     faker.number().numberBetween(17, 55));
-            StudentIdCard studentIdCard = new StudentIdCard("123456789", student);
-            studentIdCardRepository.save(studentIdCard);
 
-//            String bookName = faker.book().title();
-//            Timestamp createdAt = new Timestamp(faker.number().randomNumber());
-//
-//            String bookName2 = faker.book().title();
-//            Timestamp createdAt2= new Timestamp(faker.number().randomNumber());
-//
-//            Book book = new Book(student, bookName2, createdAt2);
-//            Book book2 = new Book(student, bookName2, createdAt2);
-//
-//            bookRepository.saveAll(List.of(book, book2));
+
+            student.addBook(new Book(faker.book().title(), LocalDateTime.now().minusDays(5)));
+            student.addBook(new Book(faker.book().title(), LocalDateTime.now()));
+            student.addBook(new Book(faker.book().title(), LocalDateTime.now().minusDays(200)));
+
+            StudentIdCard studentIdCard = new StudentIdCard("123456789", student);
+
+            student.setStudentIdCard(studentIdCard);
+            studentRepository.save(student);
+
+
+            studentRepository.findById(1L).ifPresent(s -> {
+                System.out.println("fetch book lazy...");
+                List<Book> books = s.getBooks();
+                books.forEach(book -> {
+                    System.out.println(s.getFirstName() + " borrowed " + book.getBookName());
+                });
+            });
+
         };
     }
 
